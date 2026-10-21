@@ -15,9 +15,7 @@ jobs:
       - name: Build projects
         run: |
           shopt -s nullglob
-          found=0
           for z in *.zip; do
-            found=1
             name="${z%.zip}"
             name="${name// /_}"
             mkdir -p "out/$name"
@@ -30,11 +28,10 @@ jobs:
             
             (cd "out/$name" && npm install && npx aiot build)
           done
-          if [ "$found" = 0 ]; then echo "No zip files in repo root"; exit 1; fi
-      - name: Upload RPK
+      - name: Find and Upload RPK
         uses: actions/upload-artifact@v4
         with:
           name: rpk-build
           path: |
-            **/*.rpk
+            out/
           if-no-files-found: error
