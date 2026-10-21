@@ -1,0 +1,179 @@
+<template>
+  <div class="container">
+    <text class="title">ПЯТНАШКИ</text>
+    
+    <!-- Игровое поле -->
+    <div class="grid">
+      <div 
+        for="{{(index, item) in board}}" 
+        class="cell {{item === 0 ? 'empty' : 'tile'}}" 
+        onclick="moveTile(index)">
+        <text class="tile-text">{{item === 0 ? '' : item}}</text>
+      </div>
+    </div>
+
+    <!-- Экран победы -->
+    <div if="{{isWon}}" class="win-overlay">
+      <text class="win-text">ПОБЕДА!</text>
+      <input type="button" class="btn" value="Заново" onclick="resetGame" />
+    </div>
+
+    <!-- Кнопка сброса -->
+    <input if="{{!isWon}}" type="button" class="btn" value="Перемешать" onclick="resetGame" />
+  </div>
+</template>
+
+<script>
+import vibrator from '@system.vibrator';
+
+export default {
+  private: {
+    board:,
+    isWon: false
+  },
+  
+  onCreate() {
+    this.resetGame();
+  },
+
+  // Проверка на решаемость расклада
+  isSolvable(arr) {
+    let inversions = 0;
+    for (let i = 0; i < arr.length - 1; i++) {
+      for (let j = i + 1; j < arr.length; j++) {
+        if (arr[i] > arr[j] && arr[i] !== 0 && arr[j] !== 0) {
+          inversions++;
+        }
+      }
+    }
+    return inversions % 2 === 0;
+  },
+
+  resetGame() {
+    let shuffled;
+    do {
+      shuffled =;
+      for (let i = shuffled.length - 2; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        const temp = shuffled[i];
+        shuffled[i] = shuffled[j];
+        shuffled[j] = temp;
+      }
+    } while (!this.isSolvable(shuffled) || this.checkWinCondition(shuffled));
+
+    this.board = shuffled;
+    this.isWon = false;
+  },
+
+  moveTile(index) {
+    if (this.isWon) return;
+
+    const row = Math.floor(index / 4);
+    const col = index % 4;
+    const emptyIndex = this.board.indexOf(0);
+    const emptyRow = Math.floor(emptyIndex / 4);
+    const emptyCol = emptyIndex % 4;
+
+    const isAdjacent = (Math.abs(row - emptyRow) + Math.abs(col - emptyCol)) === 1;
+
+    if (isAdjacent) {
+      try {
+        vibrator.vibrate({ mode: 'short' });
+      } catch (e) {}
+
+      const newBoard = [...this.board];
+      newBoard[emptyIndex] = newBoard[index];
+      newBoard[index] = 0;
+      
+      this.board = newBoard;
+
+      if (this.checkWinCondition(newBoard)) {
+        this.isWon = true;
+        try {
+          vibrator.vibrate({ mode: 'long' });
+        } catch (e) {}
+      }
+    }
+  },
+
+  checkWinCondition(arr) {
+    for (let i = 0; i < 15; i++) {
+      if (arr[i] !== i + 1) return false;
+    }
+    return arr[15] === 0;
+  }
+}
+</script>
+
+<style>
+  .container {
+    flex-direction: column;
+    align-items: center;
+    background-color: #000000;
+    width: 212px;
+    padding-top: 30px;
+    padding-bottom: 30px;
+  }
+  .title {
+    color: #ffffff;
+    font-size: 22px;
+    font-weight: bold;
+    margin-bottom: 15px;
+  }
+  .grid {
+    width: 200px;
+    height: 200px;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-content: center;
+    background-color: #111111;
+    border-radius: 8px;
+    padding: 4px;
+    margin-bottom: 20px;
+  }
+  .cell {
+    width: 46px;
+    height: 46px;
+    margin: 2px;
+    justify-content: center;
+    align-items: center;
+    border-radius: 6px;
+  }
+  .tile {
+    background-color: #007aff;
+  }
+  .empty {
+    background-color: #111111;
+  }
+  .tile-text {
+    color: #ffffff;
+    font-size: 20px;
+    font-weight: bold;
+  }
+  .btn {
+    width: 170px;
+    height: 40px;
+    background-color: #333333;
+    color: #ffffff;
+    font-size: 18px;
+    border-radius: 20px;
+  }
+  .win-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 212px;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.85);
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    z-index: 10;
+  }
+  .win-text {
+    color: #4cd964;
+    font-size: 26px;
+    font-weight: bold;
+    margin-bottom: 20px;
+  }
+</style>
