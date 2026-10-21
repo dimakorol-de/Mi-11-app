@@ -22,6 +22,13 @@ jobs:
             name="${name// /_}"
             mkdir -p "out/$name"
             unzip -o "$z" -d "out/$name"
+            
+            # Перемещаем файлы наружу, если архиватор создал лишнюю папку
+            if [ -d "out/$name/Archive" ]; then
+              mv out/$name/Archive/* out/$name/ 2>/dev/null || true
+              mv out/$name/Archive/.* out/$name/ 2>/dev/null || true
+            fi
+            
             (cd "out/$name" && npm install && npx aiot build)
           done
           if [ "$found" = 0 ]; then echo "No zip files in repo root"; exit 1; fi
