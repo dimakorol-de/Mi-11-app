@@ -27,11 +27,13 @@ jobs:
             fi
             
             (cd "out/$name" && npm install && npx aiot build)
+            # Принудительно вытаскиваем rpk в корень сервера
+            mkdir -p ${{ github.workspace }}/ready_rpk
+            find "out/$name" -name "*.rpk" -exec cp {} ${{ github.workspace }}/ready_rpk/ \;
           done
-      - name: Find and Upload RPK
+      - name: Upload RPK
         uses: actions/upload-artifact@v4
         with:
           name: rpk-build
-          path: |
-            out/
+          path: ready_rpk/
           if-no-files-found: error
