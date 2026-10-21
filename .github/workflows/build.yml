@@ -23,7 +23,6 @@ jobs:
             mkdir -p "out/$name"
             unzip -o "$z" -d "out/$name"
             
-            # Перемещаем файлы наружу, если архиватор создал лишнюю папку
             if [ -d "out/$name/Archive" ]; then
               mv out/$name/Archive/* out/$name/ 2>/dev/null || true
               mv out/$name/Archive/.* out/$name/ 2>/dev/null || true
@@ -32,11 +31,10 @@ jobs:
             (cd "out/$name" && npm install && npx aiot build)
           done
           if [ "$found" = 0 ]; then echo "No zip files in repo root"; exit 1; fi
-          find out -name "*.rpk" -not -path "*/node_modules/*"
       - name: Upload RPK
         uses: actions/upload-artifact@v4
         with:
           name: rpk-build
           path: |
-            out/*/dist/*.rpk
+            **/*.rpk
           if-no-files-found: error
