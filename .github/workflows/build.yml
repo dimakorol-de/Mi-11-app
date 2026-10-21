@@ -3,7 +3,7 @@ on:
   workflow_dispatch:
   push:
     paths:
-      - '*.zip'
+      - 'package.json'
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -14,26 +14,12 @@ jobs:
           node-version: 20
       - name: Build projects
         run: |
-          shopt -s nullglob
-          for z in *.zip; do
-            name="${z%.zip}"
-            name="${name// /_}"
-            mkdir -p "out/$name"
-            unzip -o "$z" -d "out/$name"
-            
-            if [ -d "out/$name/Archive" ]; then
-              mv out/$name/Archive/* out/$name/ 2>/dev/null || true
-              mv out/$name/Archive/.* out/$name/ 2>/dev/null || true
-            fi
-            
-            (cd "out/$name" && npm install && npx aiot build)
-            # Принудительно вытаскиваем rpk в корень сервера
-            mkdir -p ${{ github.workspace }}/ready_rpk
-            find "out/$name" -name "*.rpk" -exec cp {} ${{ github.workspace }}/ready_rpk/ \;
-          done
+          npm install
+          npx aiot build
       - name: Upload RPK
         uses: actions/upload-artifact@v4
         with:
           name: rpk-build
-          path: ready_rpk/
+          path: |
+            dist/*.rpk
           if-no-files-found: error
